@@ -1,13 +1,3 @@
-numpy
-sys
-glob
-os
-csv
-pickle
-functools
-argparse
-itertools
-time
-math
-pyomo
-multiprocessing
+pip>=6.0
+numpy>=1.15.1
+Pyomo==5.4.3

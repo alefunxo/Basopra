@@ -1,5 +1,4 @@
 README.txt
-setup.cfg
 setup.py
 BASOPRA.egg-info/PKG-INFO
 BASOPRA.egg-info/SOURCES.txt
