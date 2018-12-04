@@ -91,6 +91,7 @@ def select_data(country):
         if test:
             PVvec={'PV50':5}
             dwellings=['164']
+            dwellings=[i+'_US' for i in dwellings]
         combis=pd.DataFrame(np.array([i+'_'+j for i in dwellings for j in PVvec]))
         selected_dwellings=[]
         for combo in combis.index:
