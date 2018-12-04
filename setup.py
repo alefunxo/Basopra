@@ -21,7 +21,8 @@ setup(
     packages=find_packages(exclude=['docs','tests*']),
     install_requires=['pip>=6.0',
 						'numpy>=1.15.1', 
-						'Pyomo==5.4.3'],
+						'Pyomo==5.4.3',
+						'setuptools>=40.2.0'],
 
     classifiers=[
         'Development Status :: Alpha',
