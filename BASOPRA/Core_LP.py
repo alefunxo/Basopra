@@ -164,9 +164,12 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
         instance = optim.Concrete_model(param)
         if sys.platform=='win32':
             opt = SolverFactory('cplex')
-        else:
+        elif sys.platform in 'linux' or 'linux2':
             opt = SolverFactory('cplex',executable='/opt/ibm/ILOG/'
                             'CPLEX_Studio1271/cplex/bin/x86-64_linux/cplex')
+        elif sys.platform =='darwin':
+            opt = SolverFactory('cplex',executable='Applications/'
+                            'CPLEX_Studio128/cplex/bin/x86-64_osx/cplex')
 
         results = opt.solve(instance,tee=True)
         #results.write(num=1)
