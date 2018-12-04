@@ -1,0 +1,8 @@
+README.txt
+setup.cfg
+setup.py
+BASOPRA.egg-info/PKG-INFO
+BASOPRA.egg-info/SOURCES.txt
+BASOPRA.egg-info/dependency_links.txt
+BASOPRA.egg-info/requires.txt
+BASOPRA.egg-info/top_level.txt
