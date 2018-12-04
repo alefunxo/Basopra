@@ -107,7 +107,7 @@ def select_data(country):
     print('############selecting data##############')
 
     return selected_dwellings
-
+@fn_timer
 def load_param(PV_nominal_power,data_input):
 	'''
 	Description
@@ -156,12 +156,12 @@ def load_param(PV_nominal_power,data_input):
 	#define Applications, capacities and technologies to optimize
 	App_comb_scenarios=np.array([i for i in itertools.product([False,True],repeat=3)])
 	App_comb_scenarios=np.insert(App_comb_scenarios,True,1,axis=1)
-	Technologies=['NCA','NMC','NCA','LTO','ALA','VRLA']
+	Technologies=['NCA','NMC','LFP','LTO','ALA','VRLA']
 	Capacities=np.array([3,7,14])#support any capacity value
 
 	if test:
-		Technologies=['NCA','NMC','NCA','LTO','ALA','VRLA']
-		Capacities=np.array([3,7,14])#support any capacity value
+		Technologies=['LFP']
+		Capacities=np.array([7])#support any capacity value
 		App_comb_scenarios=App_comb_scenarios[-1:]
 	print(App_comb_scenarios)
 
@@ -173,7 +173,7 @@ def load_param(PV_nominal_power,data_input):
     'Capacities':Capacities}
 	return param
 
-
+@fn_timer
 def pooling(selected_dwellings):
     '''
     Description
@@ -213,13 +213,16 @@ def pooling(selected_dwellings):
         raise
 
     return
+@fn_timer
 def main():
     '''
     Main function of the main script. Allows the user to select the country
 	(CH or US). For the moment is done automatically if working in windows
 	the country is US. It opens a pool of 4 processes to process in parallel, if several dwellings are assessed.
     '''
-
+    print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+    print('Wellcome to basopra')
+    print('Here you will able to get the optimization of a single family house in the U.S. using a 7 kWh LFP-based battery')
     selected_dwellings=select_data('US')
     mp.freeze_support()
     pool=mp.Pool(processes=4)

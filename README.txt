@@ -16,3 +16,23 @@ If you make use of this software for your work we would appreciate it if you wou
 }
 
 
+In order to run the program you will need to clone it, type in your console:
+
+git clone https://github.com/alefunxo/Basopra.git
+
+then go to the repertory BASOPRA and run the setup:
+
+cd BASOPRA
+python setup.py install
+
+Once the setup has been succesfully run, you can run the Main script, for this change
+of repertory to the subdirectory BASOPRA and run Main.py:
+
+cd BASOPRA
+python Main.py
+
+In the folder Output you will find the resulting file (*.pickle) which includes the whole information of the optimization in the form of a dictionary.
+In the same folder you will find the file 'test_out.csv' where you will be able to see the last optimized day.
+
+Please have in mind that you will need CPLEX to run the optimization. If you have problems with CPLEX but you are sure you have it go to Core_LP.py and be sure that the executable path is the correct one for your system.
+
