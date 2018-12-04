@@ -29,7 +29,7 @@ setup(
 						'itertools', 
 						'time', 
 						'math', 
-						'pyomo', 
+						'pyomo<=5.5', 
 						'multiprocessing'],
 
     classifiers=[
