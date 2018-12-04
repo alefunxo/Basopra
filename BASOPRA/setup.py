@@ -7,7 +7,19 @@ build_exe_options={"packages":['numpy', 'sys', 'glob','os',
 					"excludes":["tkinter"]}
 
 base=None
-
+packages=['numpy', 
+						'sys', 
+						'glob',
+						'os', 
+						'csv', 
+						'pickle', 
+						'functools', 
+						'argparse',
+						'itertools', 
+						'time', 
+						'math', 
+						'pyomo', 
+						'multiprocessing']
 setup(
     name="BASOPRA",
     version="0.1",
