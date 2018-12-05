@@ -1,0 +1,212 @@
+\hypertarget{namespace_core___l_p}{}\section{Core\+\_\+\+LP Namespace Reference}
+\label{namespace_core___l_p}\index{Core\+\_\+\+LP@{Core\+\_\+\+LP}}
+
+
+Created on Tue Oct 31 11\+:11\+:33 2017 Author Alejandro Pena-\/\+Bello \href{mailto:alejandro.penabello@unige.ch}{\tt alejandro.\+penabello@unige.\+ch} script used for the paper Optimization of P\+V-\/coupled battery systems for combining applications\+: impact of battery technology and location (Pena-\/\+Bello et al 2018 to be published).  
+
+
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{namespace_core___l_p_addd3013e86c01fb4e5f2e614a63fb88f}\label{namespace_core___l_p_addd3013e86c01fb4e5f2e614a63fb88f}} 
+def {\bfseries fn\+\_\+timer} (function)
+\item 
+def \mbox{\hyperlink{namespace_core___l_p_a6d35392ffd5384b704752a0442ad2332}{Get\+\_\+output}} (instance)
+\item 
+def \mbox{\hyperlink{namespace_core___l_p_ae8eea760613de77c4254a1ab54c8ea19}{Optimize}} (Capacity, Tech, App\+\_\+comb, Capacity\+\_\+tariff, data\+\_\+input, param, P\+V\+\_\+nom)
+\item 
+def \mbox{\hyperlink{namespace_core___l_p_a90d03e131848066a67ee156ba403f3c2}{get\+\_\+cycle\+\_\+aging}} (DoD, Technology)
+\item 
+def \mbox{\hyperlink{namespace_core___l_p_ae2add554ee7eb6419d9ec5e4fa2c7b96}{aging\+\_\+day}} (daily\+\_\+\+E\+SB, S\+OH, S\+O\+C\+\_\+min, Batt, aux\+\_\+\+Cap)
+\item 
+def \mbox{\hyperlink{namespace_core___l_p_ab1040dbb52cf80c84f076e2cec1c43c5}{single\+\_\+opt}} (param, data\+\_\+input, Capacity\+\_\+tariff, P\+V\+\_\+nom, name)
+\item 
+def \mbox{\hyperlink{namespace_core___l_p_ad3ce270c3724a0bcc673151adc50ea9b}{save\+\_\+results}} (name, df, Tech, App\+\_\+comb, Capacity, Cap\+\_\+arr, S\+OH, Cycle\+\_\+aging\+\_\+factor, P\+\_\+max, results, cycle\+\_\+cal\+\_\+arr, P\+V\+\_\+nominal\+\_\+power, Do\+D\+\_\+arr, status)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Created on Tue Oct 31 11\+:11\+:33 2017 Author Alejandro Pena-\/\+Bello \href{mailto:alejandro.penabello@unige.ch}{\tt alejandro.\+penabello@unige.\+ch} script used for the paper Optimization of P\+V-\/coupled battery systems for combining applications\+: impact of battery technology and location (Pena-\/\+Bello et al 2018 to be published). 
+
+This script prepares the input for the \mbox{\hyperlink{namespace_l_p}{LP}} algorithm and get the output in a dataframe, finally it saves the output. \subsubsection*{Description }
+
+\subsubsection*{I\+N\+P\+U\+TS }
+
+\subsubsection*{O\+U\+T\+P\+U\+TS }
+
+\subsubsection*{T\+O\+DO }
+
+User Interface, including path to save the results and choose countries, load curves, etc. \subsubsection*{Requirements }
+
+Pandas, numpy, pyomo, pickle, math, sys,glob, time 
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{namespace_core___l_p_ae2add554ee7eb6419d9ec5e4fa2c7b96}\label{namespace_core___l_p_ae2add554ee7eb6419d9ec5e4fa2c7b96}} 
+\index{Core\+\_\+\+LP@{Core\+\_\+\+LP}!aging\+\_\+day@{aging\+\_\+day}}
+\index{aging\+\_\+day@{aging\+\_\+day}!Core\+\_\+\+LP@{Core\+\_\+\+LP}}
+\subsubsection{\texorpdfstring{aging\+\_\+day()}{aging\_day()}}
+{\footnotesize\ttfamily def Core\+\_\+\+L\+P.\+aging\+\_\+day (\begin{DoxyParamCaption}\item[{}]{daily\+\_\+\+E\+SB,  }\item[{}]{S\+OH,  }\item[{}]{S\+O\+C\+\_\+min,  }\item[{}]{Batt,  }\item[{}]{aux\+\_\+\+Cap }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}"
+A linear relationship between the capacity loss with the maximum battery
+life (years) was chosen. The values of calendric lifetime provide a
+reference value for storage degradation to 70% SOH at 20 °C temperature,
+when no charge throughput is applied [1].
+
+The temperature is assumed to be controlled and its effect on the battery
+aging minimized. As for the cyclic aging, we use a similar approach as the
+presented by Magnor et al. assuming different Woehler curves for different
+battery technologies [2]. The Woehler curves are provided in the
+specifications for some technologies (e.g. NCA), when the curve is not
+provided, we use other manufacturer curve, which use the same technology
+and adapt it to the referenced number of cycles of the real manufacturer.
+The cyclic agingis then the number of cycles per day at the given DoD,
+divided by the maximum number of cycles at a given DoD.
+
+[1] H. C. Hesse, R. Martins, P. Musilek, M. Naumann, C. N. Truong, and A.
+Jossen, “Economic Optimization of Component Sizing for Residential
+Battery Storage Systems,” Energies, vol. 10, no. 7, p. 835, Jun. 2017.
+
+[2]D. U. Sauer, P. Merk, M. Ecker, J. B. Gerschler, and D. Magnor, “Concept
+of a Battery Aging Model for Lithium-Ion Batteries Considering the Lifetime
+Dependency on the Operation Strategy,” 24th Eur. Photovolt. Sol. Energy
+Conf. 21-25 Sept. 2009 Hambg. Ger., pp. 3128–3134, Nov. 2009.
+
+cycle_cal indicates which aging dominates in the day if 1 cycle is dominating.
+Parameters
+----------
+daily_ESB : array
+SOH : float
+SOC_min : float
+Batt : class
+aux_Cap : float
+
+Returns
+-------
+SOC_max : float
+aux_Cap : float
+SOH : float
+Cycle_aging_factor : float
+cycle_cal : int
+DoD : float
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_core___l_p_a90d03e131848066a67ee156ba403f3c2}\label{namespace_core___l_p_a90d03e131848066a67ee156ba403f3c2}} 
+\index{Core\+\_\+\+LP@{Core\+\_\+\+LP}!get\+\_\+cycle\+\_\+aging@{get\+\_\+cycle\+\_\+aging}}
+\index{get\+\_\+cycle\+\_\+aging@{get\+\_\+cycle\+\_\+aging}!Core\+\_\+\+LP@{Core\+\_\+\+LP}}
+\subsubsection{\texorpdfstring{get\+\_\+cycle\+\_\+aging()}{get\_cycle\_aging()}}
+{\footnotesize\ttfamily def Core\+\_\+\+L\+P.\+get\+\_\+cycle\+\_\+aging (\begin{DoxyParamCaption}\item[{}]{DoD,  }\item[{}]{Technology }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}The cycle aging factors are defined for each technology according
+to the DoD using an exponential function close to the Woehler curve.
+Parameters
+----------
+DoD : float
+Technology : string
+
+Returns
+-------
+Cycle_aging_factor : float
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_core___l_p_a6d35392ffd5384b704752a0442ad2332}\label{namespace_core___l_p_a6d35392ffd5384b704752a0442ad2332}} 
+\index{Core\+\_\+\+LP@{Core\+\_\+\+LP}!Get\+\_\+output@{Get\+\_\+output}}
+\index{Get\+\_\+output@{Get\+\_\+output}!Core\+\_\+\+LP@{Core\+\_\+\+LP}}
+\subsubsection{\texorpdfstring{Get\+\_\+output()}{Get\_output()}}
+{\footnotesize\ttfamily def Core\+\_\+\+L\+P.\+Get\+\_\+output (\begin{DoxyParamCaption}\item[{}]{instance }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Gets the model output and transforms it into a pandas dataframe
+with the desired names.
+Parameters
+----------
+instance : instance of pyomo
+
+Returns
+-------
+df : DataFrame
+P_max_ : vector of daily maximum power\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_core___l_p_ae8eea760613de77c4254a1ab54c8ea19}\label{namespace_core___l_p_ae8eea760613de77c4254a1ab54c8ea19}} 
+\index{Core\+\_\+\+LP@{Core\+\_\+\+LP}!Optimize@{Optimize}}
+\index{Optimize@{Optimize}!Core\+\_\+\+LP@{Core\+\_\+\+LP}}
+\subsubsection{\texorpdfstring{Optimize()}{Optimize()}}
+{\footnotesize\ttfamily def Core\+\_\+\+L\+P.\+Optimize (\begin{DoxyParamCaption}\item[{}]{Capacity,  }\item[{}]{Tech,  }\item[{}]{App\+\_\+comb,  }\item[{}]{Capacity\+\_\+tariff,  }\item[{}]{data\+\_\+input,  }\item[{}]{param,  }\item[{}]{P\+V\+\_\+nom }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}This function calls the LP and controls the aging. The aging is then
+calculated in daily basis and the capacity updated. When the battery
+reaches the EoL the loop breaks. 'days' allows to optimize multiple days at once.
+
+Parameters
+----------
+Capacity : float
+Tech : string
+App_comb : array
+Capacity_tariff : float
+data_input: DataFrame
+param: dict
+PV_nom: float
+
+Returns
+-------
+df : DataFrame
+aux_Cap_arr : array
+SOH_arr : array
+Cycle_aging_factor : array
+P_max_arr : array
+results_arr : array
+cycle_cal_arr : array
+DoD_arr : array
+\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_core___l_p_ad3ce270c3724a0bcc673151adc50ea9b}\label{namespace_core___l_p_ad3ce270c3724a0bcc673151adc50ea9b}} 
+\index{Core\+\_\+\+LP@{Core\+\_\+\+LP}!save\+\_\+results@{save\+\_\+results}}
+\index{save\+\_\+results@{save\+\_\+results}!Core\+\_\+\+LP@{Core\+\_\+\+LP}}
+\subsubsection{\texorpdfstring{save\+\_\+results()}{save\_results()}}
+{\footnotesize\ttfamily def Core\+\_\+\+L\+P.\+save\+\_\+results (\begin{DoxyParamCaption}\item[{}]{name,  }\item[{}]{df,  }\item[{}]{Tech,  }\item[{}]{App\+\_\+comb,  }\item[{}]{Capacity,  }\item[{}]{Cap\+\_\+arr,  }\item[{}]{S\+OH,  }\item[{}]{Cycle\+\_\+aging\+\_\+factor,  }\item[{}]{P\+\_\+max,  }\item[{}]{results,  }\item[{}]{cycle\+\_\+cal\+\_\+arr,  }\item[{}]{P\+V\+\_\+nominal\+\_\+power,  }\item[{}]{Do\+D\+\_\+arr,  }\item[{}]{status }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Save the results in pickle format using the corresponding timezone.
+The file is saved in the same directory the program is saved.
+The name is structured as follows: df_name_tech_App_Cap.pickle
+Parameters
+----------
+name : string
+df : DataFrame
+Tech : string
+App_comb : array
+Capacity : float
+Cap_arr : array
+SOH : float
+Cycle_aging_factor : float
+P_max :float
+results : array
+cycle_cal_arr : array
+PV_nominal_power : float
+DoD_arr : array
+
+Returns
+-------
+bool
+    True if successful, False otherwise.\end{DoxyVerb}
+ \mbox{\Hypertarget{namespace_core___l_p_ab1040dbb52cf80c84f076e2cec1c43c5}\label{namespace_core___l_p_ab1040dbb52cf80c84f076e2cec1c43c5}} 
+\index{Core\+\_\+\+LP@{Core\+\_\+\+LP}!single\+\_\+opt@{single\+\_\+opt}}
+\index{single\+\_\+opt@{single\+\_\+opt}!Core\+\_\+\+LP@{Core\+\_\+\+LP}}
+\subsubsection{\texorpdfstring{single\+\_\+opt()}{single\_opt()}}
+{\footnotesize\ttfamily def Core\+\_\+\+L\+P.\+single\+\_\+opt (\begin{DoxyParamCaption}\item[{}]{param,  }\item[{}]{data\+\_\+input,  }\item[{}]{Capacity\+\_\+tariff,  }\item[{}]{P\+V\+\_\+nom,  }\item[{}]{name }\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}"
+Iterates over capacities, technologies and applications and calls the module to save the results.
+Parameters
+----------
+param: dict
+data_input: DataFrame
+Capacity_tariff: float
+PV_nom: float
+name: string
+
+Returns
+-------
+df : DataFrame
+Cap_arr : array
+SOH : float
+Cycle_aging_factor : float
+P_max : float
+results : float
+cycle_cal_arr :array
+\end{DoxyVerb}
+ 
