@@ -221,7 +221,7 @@ def main():
 	the country is US. It opens a pool of 4 processes to process in parallel, if several dwellings are assessed.
     '''
     print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
-    print('Wellcome to basopra')
+    print('Welcome to basopra')
     print('Here you will able to get the optimization of a single family house in the U.S. using a 7 kWh LFP-based battery')
     selected_dwellings=select_data('US')
     mp.freeze_support()
