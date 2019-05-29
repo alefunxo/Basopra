@@ -4,7 +4,7 @@
 # Author
 # Alejandro Pena-Bello
 # alejandro.penabello@unige.ch
-# Main script used for the paper Optimization of PV-coupled battery systems for combining applications: impact of battery technology and location (Pena-Bello et al 2018 to be published).
+# Main script used for the paper Optimization of PV-coupled battery systems for combining applications: impact of battery technology and location (Pena-Bello et al 2019 to be published).
 # The study focuses on residential PV-coupled battery systems. We study the different applications which residential batteries can perform from a consumer perspective. Applications such as avoidance of PV curtailment, demand load-shifting and demand peak shaving are considered along  with the base application, PV self-consumption. Moreover, six different battery technologies currently available in the market are considered as well as three sizes (3 kWh, 7 kWh and 14 kWh). We analyze the impact of the type of demand profile and type of tariff structure by comparing results across dwellings in Switzerland and in the U.S.
 # The battery schedule is optimized for every day (i.e. 24 h optimization framework), we assume perfect day-ahead forecast of the electricity demand load and solar PV generation in order to determine the maximum economic potential regardless of the forecast strategy used. Aging was treated as an exogenous parameter, calculated on daily basis and was not subject of optimization. Data with 15-minute temporal resolution were used for simulations. The model objective function have two components, the energy-based and the power-based component, as the tariff structure depends on the applications considered, a boolean parameter activate the power-based factor of the bill when is necessary.
 # Every optimization was run for one year and then the results were linearly-extrapolated to reach the battery end of life. Therefore, the analysis is done with same prices for all years across battery lifetime. We assume 30\% of capacity depletion as the end of life.
@@ -77,8 +77,6 @@ def select_data(country):
        init_path='C:/Users/alejandro/'
     else:
         init_path='/home/alefunxo/'
-    if country=='CH':
-        print('CH data is confidential')
     if country=='US':
         test=True
         file=list(glob.glob('../Input/df_US.csv'))
@@ -149,7 +147,7 @@ def load_param(PV_nominal_power,data_input):
 	#define time resolution dt is 1/4 hours i.e. 15 min
 	dt=0.25
 	nyears=1
-	days=1#in order to do some tests this parameter allows the user to change the number of days to simulate (1-365)
+	days=365#in order to do some tests this parameter allows the user to change the number of days to simulate (1-365)
 	if (nyears>1) & (days!=365):
 		days=365
 	ndays=days*nyears

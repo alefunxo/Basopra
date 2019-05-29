@@ -5,7 +5,7 @@
 # Author
 # Alejandro Pena-Bello
 # alejandro.penabello@unige.ch
-# script used for the paper Optimization of PV-coupled battery systems for combining applications: impact of battery technology and location (Pena-Bello et al 2018 to be published).
+# script used for the paper Optimization of PV-coupled battery systems for combining applications: impact of battery technology and location (Pena-Bello et al 2019 to be published).
 # This script prepares the input for the LP algorithm and get the output in a dataframe, finally it saves the output.
 # Description
 # -----------
@@ -124,7 +124,7 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
     SOC_max_=Batt.SOC_max
     SOH_aux=1
     for i in range(int(param['ndays']/days)):
-        print(i)
+        print(i, end='')
         if i==0:
             aux_Cap_aged=Batt.Capacity
             aux_SOC_max=Batt.SOC_max
@@ -134,20 +134,14 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
             aux_SOC_max=SOC_max_
             SOH=SOH_aux
         data_input_=data_input[data_input.index.dayofyear==data_input.index.dayofyear[0]+i]
-
-
         if App_comb[2]==True:
             retail_price_dict=dict(enumerate(data_input_.Price_DT))
-
         else:
             retail_price_dict=dict(enumerate(data_input_.Price_flat))
-
         Export_price_dict=dict(enumerate(data_input_.Export_price))
         E_demand_dict=dict(enumerate(data_input_.E_demand))
         E_PV_dict=dict(enumerate(data_input_.E_PV))
         Set_declare=np.arange(-1,data_input_.shape[0])
-
-
         param.update({'PV_nominal_power':PV_nom,
     		'SOC_max':aux_SOC_max,
     		'Batt':Batt,
@@ -159,8 +153,6 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
     		'technology':Tech,'App_comb':dict(enumerate(App_comb))})
             #Max_inj is in kW
         param['Max_inj']=param['Curtailment']*param['PV_nominal_power']
-        #print(param)
-        #print(data_input.Export_price)
         instance = optim.Concrete_model(param)
         if sys.platform=='win32':
             opt = SolverFactory('cplex')
@@ -171,7 +163,7 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
             opt = SolverFactory('cplex',executable='/Applications/'
                             'CPLEX_Studio128/cplex/bin/x86-64_osx/cplex')
 
-        results = opt.solve(instance,tee=True)
+        results = opt.solve(instance)#,tee=True)
         #results.write(num=1)
 
         if (results.solver.status == SolverStatus.ok) and (results.solver.termination_condition == TerminationCondition.optimal):
@@ -234,7 +226,6 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
                   +df.E_loss_conv)/dt)
 
     df.set_index('index',inplace=True)
-    #totaltime=time.clock()-timezero
     return (df,aux_Cap_arr,SOH_arr,Cycle_aging_factor,P_max_arr,results_arr,cycle_cal_arr,DoD_arr,results)
 def get_cycle_aging(DoD,Technology):
     '''
@@ -357,12 +348,6 @@ def single_opt(param, data_input, Capacity_tariff,PV_nom,name):
     cycle_cal_arr :array
     """
     l=0
-#    totaltime_tech=np.zeros(len(param['Technologies']))
-#    totaltime_app=np.zeros(len(param['App_comb_scenarios']))
-#    totaltime_cap=np.zeros(len(param['Capacities']))
-#    timezero=time.clock()
-
-
     for Tech in param['Technologies']:
         timetech=time.clock()
         k=0
@@ -392,12 +377,8 @@ def single_opt(param, data_input, Capacity_tariff,PV_nom,name):
                         print('\n\n\n################################n\n\n\n')
                     else:
                         print('Something went wrong, status:', aux.solver.status)
-        #        totaltime=time.clock()-timezeroz
-        #        totaltime_cap[j]=time.clock()-timecap
                 j+=1
-        #    totaltime_app[k]=time.clock()-timeapp
             k+=1
-        #totaltime_tech[l]=time.clock()-timetech
         l+=1
 
     return  [df,Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr]
@@ -454,8 +435,6 @@ def save_results(name,df,Tech, App_comb, Capacity,Cap_arr,SOH,
                         %{'name':name,'Tech':Tech,'App_comb':name_comb,
                         'Cap':Capacity})
             df.to_csv('../Output/test_out.csv',sep=';')
-
-            #print(P_max)
         else:
         		filename_save=('../Output/df_%(name)s_%(Tech)s_%(App_comb)s_%(Cap)s.pickle'
                             %{'name':name,'Tech':Tech,'App_comb':name_comb,
