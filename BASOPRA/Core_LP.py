@@ -5,7 +5,7 @@
 # Author
 # Alejandro Pena-Bello
 # alejandro.penabello@unige.ch
-# script used for the paper Optimization of PV-coupled battery systems for combining applications: impact of battery technology and location (Pena-Bello et al 2019 to be published).
+# script used for the paper Optimization of PV-coupled battery systems for combining applications: impact of battery technology and location (Pena-Bello et al 2018 to be published).
 # This script prepares the input for the LP algorithm and get the output in a dataframe, finally it saves the output.
 # Description
 # -----------
@@ -21,7 +21,7 @@
 # Pandas, numpy, pyomo, pickle, math, sys,glob, time
 
 import pandas as pd
-import classes_p as pc
+import paper_classes as pc
 from pyomo.opt import SolverFactory, SolverStatus, TerminationCondition
 from pyomo.core import Var
 import time
@@ -33,6 +33,11 @@ import sys
 import glob
 from functools import wraps
 import csv
+import os
+import tempfile
+import post_proc as pp
+import threading
+from pathlib import Path
 
 def fn_timer(function):
     @wraps(function)
@@ -46,7 +51,6 @@ def fn_timer(function):
         return result
     return function_timer
 
-
 def Get_output(instance):
     '''
     Gets the model output and transforms it into a pandas dataframe
@@ -54,16 +58,16 @@ def Get_output(instance):
     Parameters
     ----------
     instance : instance of pyomo
-
     Returns
     -------
     df : DataFrame
     P_max_ : vector of daily maximum power
-
     '''
     #to write in a csv goes faster than actualize a df
 
-    with open('../Output/Results.csv', 'w') as f:
+    np.random.seed()
+    filename='out'+str(np.random.randint(1, 10, 10))[1:-1].replace(" ", "")+'.csv'
+    with open(filename, 'a') as f:
         writer = csv.writer(f, delimiter=';')
         for v in instance.component_objects(Var, active=True):
           varobject = getattr(instance, str(v))
@@ -72,13 +76,14 @@ def Get_output(instance):
                   P_max_=(v[index].value)
               else:
                   writer.writerow([index, varobject[index].value, v])
-    df=pd.read_csv('../Output/Results.csv',sep=';',names=['val','var'])
+    df=pd.read_csv(filename,sep=';',names=['val','var'])
+    os.remove(filename)
     df=df.pivot_table(values='val', columns='var',index=df.index)
     df=df.drop(-1)
     return [df,P_max_]
 @fn_timer
-def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
-            param,PV_nom):
+def Optimize(Capacity,Tech,App_comb,data_input,
+            param):
 
     """
     This function calls the LP and controls the aging. The aging is then
@@ -90,10 +95,8 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
     Capacity : float
     Tech : string
     App_comb : array
-    Capacity_tariff : float
     data_input: DataFrame
     param: dict
-    PV_nom: float
 
     Returns
     -------
@@ -111,8 +114,16 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
     print(Capacity)
     days=1
     dt=param['delta_t']
+    end_d=int(param['ndays']*24/dt)
+    window=int(24*days/dt)
+    print(end_d)
+
     print('%%%%%%%%% Optimizing %%%%%%%%%%%%%%%')
-    Batt=pc.Battery(Capacity,Tech)
+    if param['cases']==False:
+        Batt=pc.Battery_tech(Capacity=Capacity,Technology=Tech)
+    else:
+        Batt=pc.Battery_case(Capacity=Capacity,Technology=Tech,case=param['cases'])
+
     aux_Cap_arr=np.zeros(param['ndays'])
     SOC_max_arr=np.zeros(param['ndays'])
     SOH_arr=np.zeros(param['ndays'])
@@ -123,8 +134,10 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
     aux_Cap=Batt.Capacity
     SOC_max_=Batt.SOC_max
     SOH_aux=1
+
     for i in range(int(param['ndays']/days)):
         print(i, end='')
+        toy=0
         if i==0:
             aux_Cap_aged=Batt.Capacity
             aux_SOC_max=Batt.SOC_max
@@ -135,33 +148,40 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
             SOH=SOH_aux
         data_input_=data_input[data_input.index.dayofyear==data_input.index.dayofyear[0]+i]
         if App_comb[2]==True:
-            retail_price_dict=dict(enumerate(data_input_.Price_DT))
+            if App_comb[3]==True:
+                retail_price_dict=dict(enumerate(data_input_.Price_DT_mod))
+            else:
+                retail_price_dict=dict(enumerate(data_input_.Price_DT))
         else:
-            retail_price_dict=dict(enumerate(data_input_.Price_flat))
+            if App_comb[3]==True:
+                retail_price_dict=dict(enumerate(data_input_.Price_flat_mod))
+            else:
+                retail_price_dict=dict(enumerate(data_input_.Price_flat))
+
         Export_price_dict=dict(enumerate(data_input_.Export_price))
         E_demand_dict=dict(enumerate(data_input_.E_demand))
         E_PV_dict=dict(enumerate(data_input_.E_PV))
         Set_declare=np.arange(-1,data_input_.shape[0])
-        param.update({'PV_nominal_power':PV_nom,
-    		'SOC_max':aux_SOC_max,
+
+        param.update({'SOC_max':aux_SOC_max,
     		'Batt':Batt,
     		'Export_price':Export_price_dict,
     		'Set_declare':Set_declare,
-    		'Capacity_tariff':Capacity_tariff,
     		'E_demand':E_demand_dict,'E_PV':E_PV_dict,
-    		'retail_price':retail_price_dict,'Capacity':Capacity,
-    		'technology':Tech,'App_comb':dict(enumerate(App_comb))})
+    		'retail_price':retail_price_dict,
+    		'App_comb':dict(enumerate(App_comb))})
             #Max_inj is in kW
-        param['Max_inj']=param['Curtailment']*param['PV_nominal_power']
+
+        param['Max_inj']=param['Curtailment']*param['PV_nom']
+
+
         instance = optim.Concrete_model(param)
         if sys.platform=='win32':
             opt = SolverFactory('cplex')
-        elif sys.platform in 'linux' or 'linux2':
+
+        else:
             opt = SolverFactory('cplex',executable='/opt/ibm/ILOG/'
                             'CPLEX_Studio1271/cplex/bin/x86-64_linux/cplex')
-        else:
-            opt = SolverFactory('cplex',executable='/Applications/'
-                            'CPLEX_Studio128/cplex/bin/x86-64_osx/cplex')
 
         results = opt.solve(instance)#,tee=True)
         #results.write(num=1)
@@ -216,11 +236,17 @@ def Optimize(Capacity,Tech,App_comb,Capacity_tariff,data_input,
             print ('Solver Status: ',  results.solver.status)
             return (None,None,None,None,None,None,None,None,results)
     end_d=df.shape[0]
-    df=pd.concat([df,data_input.loc[data_input.index[:end_d],data_input.columns[[0,1,4]]].reset_index()],axis=1)
+    df=pd.concat([df,data_input.loc[data_input.index[:end_d],['E_demand','E_PV','Export_price']].reset_index()],axis=1)
     if App_comb[2]==True:
-        df['price']=data_input.Price_DT.reset_index(drop=True)[:end_d].values
+        if App_comb[3]==True:
+            df['price']=data_input.Price_DT_mod.reset_index(drop=True)[:end_d].values
+        else:
+            df['price']=data_input.Price_DT.reset_index(drop=True)[:end_d].values
     else:
-        df['price']=data_input.Price_flat.reset_index(drop=True)[:end_d].values
+        if App_comb[3]==True:
+            df['price']=data_input.Price_flat_mod.reset_index(drop=True)[:end_d].values
+        else:
+            df['price']=data_input.Price_flat.reset_index(drop=True)[:end_d].values
     df['Inv_P']=((df.E_PV_load+df.E_dis+df.E_PV_grid+df.E_loss_inv)/dt)
     df['Conv_P']=((df.E_PV_load+df.E_PV_batt+df.E_PV_grid
                   +df.E_loss_conv)/dt)
@@ -326,15 +352,13 @@ def aging_day(daily_ESB,SOH,SOC_min,Batt,aux_Cap):
     SOC_max=Batt.SOC_min+aux_Cap*(aux_DOD)
     return [SOC_max,aux_Cap,SOH,Cycle_aging_factor,cycle_cal,DoD]
 
-def single_opt(param, data_input, Capacity_tariff,PV_nom,name):
+def single_opt2(param, data_input, name):
     """"
     Iterates over capacities, technologies and applications and calls the module to save the results.
     Parameters
     ----------
     param: dict
     data_input: DataFrame
-    Capacity_tariff: float
-    PV_nom: float
     name: string
 
     Returns
@@ -347,45 +371,104 @@ def single_opt(param, data_input, Capacity_tariff,PV_nom,name):
     results : float
     cycle_cal_arr :array
     """
-    l=0
-    for Tech in param['Technologies']:
-        timetech=time.clock()
-        k=0
-        for App_comb in param['App_comb_scenarios']:
-            timeapp=time.clock()
-            j=0
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-            for Capacity in param['Capacities']:
-                timecap=time.clock()
-                timezeroz=time.clock()
+    print('@@@@@@@@@@@@@@@@@@@@@@@@@@')
+    print('single_opt2')
 
-                [df,Cap_arr,SOH,Cycle_aging_factor,P_max,results,
-                 cycle_cal_arr,DoD_arr,aux]=Optimize(Capacity,
-                                Tech,App_comb,Capacity_tariff,
-                                data_input,param,PV_nom)
-                if SOH is not None:
-                    save_results(name,df,Tech, App_comb, Capacity,Cap_arr,SOH,
-                                 Cycle_aging_factor,P_max,results,cycle_cal_arr,
-                                 PV_nom,DoD_arr,0)
-                else:
-                    save_results(name,df,Tech, App_comb, Capacity,Cap_arr,SOH,
-                                 Cycle_aging_factor,P_max,results,cycle_cal_arr,
-                                 PV_nom,DoD_arr,1)
-                    if aux.solver.termination_condition == TerminationCondition.infeasible:
-                        print('\n\n\n################################n\n\n\n')
-                        print('The HP power or the Inverter power are underrated or other error may have ocurred, the solution is unfeasible')
-                        print('\n\n\n################################n\n\n\n')
-                    else:
-                        print('Something went wrong, status:', aux.solver.status)
-                j+=1
-            k+=1
-        l+=1
-
+    aux_app_comb=param['App_comb']#afterwards is modified to send to LP
+    print('Printing cases')
+    print(param['cases'])
+    param.update({'cases':param['cases']})
+    print('enter optimize1')
+    [df,Cap_arr,SOH,Cycle_aging_factor,P_max,results, cycle_cal_arr,DoD_arr,aux]=Optimize(param['Capacity'],param['Tech'],param['App_comb'],data_input,param)
+    print('out of optimize1')
+    param.update({'App_comb':aux_app_comb})
+    save_results(name,df,param['Tech'], aux_app_comb,param['Capacity'],Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr,param['PV_nom'],DoD_arr,param['cases'],0)
+    aggregate_results(name,df,aux_app_comb,param,Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr,DoD_arr,0)
     return  [df,Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr]
+
+def aggregate_results(name,df,aux_app_comb,param,Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr,DoD_arr,status):
+    '''
+    Takes the results from the whole year optimization and gets the aggregated results.
+    Parameters
+    ----------
+    name : string
+    df : DataFrame
+    Cap_arr : array
+    SOH : float
+    Cycle_aging_factor : float
+    P_max :float
+    results : array
+    cycle_cal_arr : array
+    DoD_arr : array
+    Returns
+    -------
+    bool
+        True if successful, False otherwise.
+    '''
+    #attention E_batt_load
+
+    try:
+        print("OUIIIIIIIIIIIIII")
+        Capacity_aux=param['Capacity']
+        if Capacity_aux%1>0:
+
+            Capacity_aux=str(param['Capacity']).replace('.','_')
+
+        df=df.loc[:,['E_PV_batt', 'E_PV_curt', 'E_PV_grid', 'E_PV_load',
+        'E_char', 'E_cons', 'E_dis',
+       'E_grid_batt', 'E_grid_load', 'E_loss_Batt',
+       'E_loss_conv', 'E_loss_inv', 'E_loss_inv_PV', 'E_loss_inv_batt',
+       'E_loss_inv_grid', 'SOC', 'E_demand', 'E_PV', 'Export_price',
+       'price', 'Inv_P', 'Conv_P']]
+        dict_res={'df':df,'Tech':param['Tech'], 'App_comb': param['App_comb'], 'Capacity':Capacity_aux,
+        'Cap_arr':Cap_arr,'SOH':SOH,'DoD':DoD_arr,
+        'Cycle1_aging0_factor':Cycle_aging_factor,'P_max':P_max,'name':name,
+        'results':results,'cycle_cal_arr':cycle_cal_arr,'PV_nom':param['PV_nom'],'cases':param['cases'],'status':status}
+
+        col = ["%i" % x for x in param['App_comb']]
+        name_comb=col[0]+col[1]+col[2]+col[3]
+
+        [agg_results]=pp.get_main_results(dict_res,param)
+
+        print(agg_results.head())
+        filename=Path('../Output/aggregated_results_ext.csv')
+
+        write_csv(filename,agg_results.values)
+        print(agg_results.keys())
+        flag=0
+    except IOError as e:
+        flag=1
+        print('Had some issues with the aggregated results')
+        print ("I/O error({0}): {1}".format(e.errno, e.strerror))
+
+    except ValueError:
+        flag=1
+        print('Had some issues with the aggregated results')
+        print ("Could not convert data to an integer.")
+
+    except:
+        flag=1
+        print('Had some issues with the aggregated results')
+        print ("Unexpected error:", sys.exc_info()[0])
+        print ("Unexpected error2:", sys.stderr)
+
+    finally:
+
+
+        if flag==1:
+            print('in any case save the results')
+            save_results(name,df,param['Tech'], param['App_comb'], param['Capacity'],Cap_arr,SOH,
+                         Cycle_aging_factor,P_max,results,cycle_cal_arr,
+                         param['PV_nom'],DoD_arr,param['cases'],status)
+def write_csv(filename,val):#Should be saved in a DB
+    print('write_csv')
+    with open(filename, 'a', newline='') as f:
+        writer = csv.writer(f, delimiter=';')
+        writer.writerow(val)
 
 def save_results(name,df,Tech, App_comb, Capacity,Cap_arr,SOH,
                  Cycle_aging_factor,P_max,results,cycle_cal_arr,
-                 PV_nominal_power,DoD_arr,status):
+                 PV_nominal_power,DoD_arr,cases,status):
     '''
     Save the results in pickle format using the corresponding timezone.
 	The file is saved in the same directory the program is saved.
@@ -405,42 +488,42 @@ def save_results(name,df,Tech, App_comb, Capacity,Cap_arr,SOH,
     cycle_cal_arr : array
     PV_nominal_power : float
     DoD_arr : array
-
     Returns
     -------
     bool
         True if successful, False otherwise.
-
     '''
-
-    Capacity_aux=Capacity
-    if Capacity%1>0:
-        Capacity_aux=str(Capacity).replace('.','_')
-
-    dict_save={'df':df,'Tech':Tech, 'App_comb': App_comb, 'Capacity':Capacity_aux,
-    'Cap_arr':Cap_arr,'SOH':SOH,'DoD':DoD_arr,
-    'Cycle1_aging0_factor':Cycle_aging_factor,'P_max':P_max,'name':name,
-    'results':results,'cycle_cal_arr':cycle_cal_arr,'PV_nom':PV_nominal_power,'status':status}
-    col = ["%i" % x for x in App_comb]
-    name_comb=col[0]+col[1]+col[2]+col[3]
-    if 'test'in name:
-        filename_save=(list(glob.glob('../Output'))[0]
-                        +'df_%(name)s_%(Tech)s_%(App_comb)s_%(Cap)s.pickle'
-                        %{'name':name,'Tech':Tech,'App_comb':name_comb,
-                        'Cap':Capacity})
-        pickle.dump(dict_save,open(filename_save,"wb"),protocol=2)
-    else:
-        if sys.platform=='win32':
-            filename_save=('../Output/df_%(name)s_%(Tech)s_%(App_comb)s_%(Cap)s.pickle'
-                        %{'name':name,'Tech':Tech,'App_comb':name_comb,
-                        'Cap':Capacity})
-            df.to_csv('../Output/test_out.csv',sep=';')
+    try:
+        print('saving')
+        Capacity_aux=Capacity
+        if Capacity%1>0:
+            Capacity_aux=str(Capacity).replace('.','_')
         else:
-        		filename_save=('../Output/df_%(name)s_%(Tech)s_%(App_comb)s_%(Cap)s.pickle'
-                            %{'name':name,'Tech':Tech,'App_comb':name_comb,
-                            'Cap':Capacity})
-        pickle.dump(dict_save,open(filename_save,"wb"))
+            Capacity_aux=int(Capacity)
+        df=df.loc[:,['E_PV_batt', 'E_PV_curt', 'E_PV_grid', 'E_PV_load',
+           'E_char', 'E_cons', 'E_dis',
+           'E_grid_batt', 'E_grid_load', 'E_loss_Batt',
+           'E_loss_conv', 'E_loss_inv', 'E_loss_inv_PV', 'E_loss_inv_batt',
+           'E_loss_inv_grid', 'SOC', 'E_demand', 'E_PV', 'Export_price',
+           'price', 'Inv_P', 'Conv_P']]
 
-    print ('%%%%%%%%%%%% File Saved as %%%%%%%%%%%%%%%%%')
-    print(filename_save)
+        col = ["%i" % x for x in App_comb]
+        name_comb=col[0]+col[1]+col[2]+col[3]
+
+        if sys.platform=='win32':
+            filename_save=('../Output/df_%(name)s_%(Tech)s_%(App_comb)s_%(Cap)s_%(cases)s_online.csv'%{'name':name,'Tech':Tech,'App_comb':name_comb,'Cap':Capacity,'cases':cases})
+
+        else:
+        		filename_save=('../Output/df_%(name)s_%(Tech)s_%(App_comb)s_%(Cap)s_%(cases)s_marzia.csv'%{'name':name,'Tech':Tech,'App_comb':name_comb,'Cap':Capacity,'cases':cases})
+        #pickle.dump(dict_save,open(filename_save,"wb"))
+        df.round(4).to_csv(filename_save)
+        print(App_comb)
+        print(name_comb)
+        print ('%%%%%%%%%%%% File Saved as %%%%%%%%%%%%%%%%%')
+        print(filename_save)
+
+
+
+    except:
+        print('Save Failed')
     return()

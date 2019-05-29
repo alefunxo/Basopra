@@ -88,7 +88,7 @@ def Concrete_model(Data):
     m.E_PV_curt=en.Var(m.Time,bounds=(0,None),initialize=0)
     m.E_grid_load=en.Var(m.Time,bounds=(0,None),initialize=0)
     m.E_grid_batt=en.Var(m.Time,bounds=(0,m.Batt_char_max*m.dt),
-                       initialize=0)#because the power is in C terms thus, per hour
+                       initialize=0)
 
     m.E_loss_Batt=en.Var(m.Time,bounds=(0,None),initialize=0)
 
@@ -153,7 +153,6 @@ def Concrete_model(Data):
 
 #Energy
 #Battery constraints
-
 def Bool_char_rule_1(m,i):
     '''
     Description
@@ -326,18 +325,17 @@ def Conv_losses_rule(m,i):
     '''
     Description
     -------
-    Converter losses definition. 1-Converter_efficiency times the electricity that pass through the converter. Since E_PV_load, and E_PV_grid are the energy flows after the inverter, they need to be divided by the inverter efficiency to get the real converter losses.
+    Converter losses definition. 1-Converter_efficiency times the electricity that pass through the converter.
     '''
-    return(m.E_loss_conv[i],((m.E_PV_load[i]+m.E_PV_grid[i])/(m.Inverter_eff)+m.E_PV_batt[i])*(1-m.Converter_eff))
+    return(m.E_loss_conv[i],((m.E_PV_load[i]+m.E_PV_grid[i]+m.E_PV_batt[i]+m.E_loss_inv_PV[i])*(1-m.Converter_eff)))
 
 def Inv_losses_PV_rule(m,i):
     '''
     Description
     -------
-    PV inverter losses definition. 1-Inverter_efficiency times the electricity that pass through the Inverter (takes into account only PV related electricity). Since E_PV_load and E_PV_grid are the energy flows after the inverter, they need to be divided by the inverter efficiency to get the real inverter losses.
+    PV inverter losses definition. 1-Inverter_efficiency times the electricity that pass through the Inverter (takes into account only PV related electricity).
     '''
-    return(m.E_loss_inv_PV[i],(m.E_PV_grid[i]
-           +m.E_PV_load[i])*(1-m.Inverter_eff)/(m.Inverter_eff))
+    return(m.E_loss_inv_PV[i],(m.E_PV_grid[i]+m.E_PV_load[i])*(1-m.Inverter_eff)/m.Inverter_eff)
 
 def Inv_losses_Batt_rule(m,i):
     '''
@@ -351,9 +349,9 @@ def Inv_losses_Grid_rule(m,i):
     '''
     Description
     -------
-    PV inverter losses definition. 1-Inverter_efficiency times the electricity that pass through the Inverter (takes into account only grid related electricity, i.e. for charging the battery). E_grid_batt does not need to be divided by the inverter efficiency since it is at the consumption side of the system.
+    PV inverter losses definition. 1-Inverter_efficiency times the electricity that pass through the Inverter (takes into account only grid related electricity, i.e. for charging the battery).
     '''
-    return(m.E_loss_inv_grid[i],(m.E_grid_batt[i])*(1-m.Inverter_eff))
+    return(m.E_loss_inv_grid[i],(m.E_grid_batt[i]/m.Inverter_eff)*(1-m.Inverter_eff))
 
 def Inv_losses_rule(m,i):
     '''
@@ -370,9 +368,9 @@ def Batt_losses_rule(m,i):
     -------
     Battery losses definition. 1-Battery_efficiency times the electricity that pass through the battery (roundtrip efficiency).
     '''
-    return(m.E_loss_Batt[i],(m.E_grid_batt[i]*(m.Inverter_eff)+m.E_PV_batt[i]*(m.Converter_eff))*(1-m.Efficiency))
+    return(m.E_loss_Batt[i],(m.E_grid_batt[i]+m.E_PV_batt[i])*(1-m.Efficiency))
 
-#Batt
+#Power
 
 def Inverter_rule(m,i):
     '''
@@ -413,6 +411,9 @@ def P_max_rule(m,i):
     '''
     return(m.E_cons[i]/m.dt<=m.P_max_day)
 
+
+#def P_max_rule_grid(m,i):
+#    return(m.E_PV_grid[i]/m.dt<=m.P_max_day)
 
 #App
 
