@@ -23,7 +23,9 @@ git clone https://github.com/alefunxo/Basopra.git
 then go to the repertory BASOPRA and run the setup:
 
 cd Basopra
-python3 setup.py install
+python3 setup.py install 
+
+pyomo 5.5.1 proved to work fine with python 3.6 and 3.7, please use this version.
 
 Once the setup has been succesfully run, you can run the Main script, for this, change the repertory to the subdirectory BASOPRA and run python3 Main.py:
 
