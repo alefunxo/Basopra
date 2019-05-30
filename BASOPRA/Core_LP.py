@@ -378,9 +378,9 @@ def single_opt2(param, data_input, name):
     print('Printing cases')
     print(param['cases'])
     param.update({'cases':param['cases']})
-    print('enter optimize1')
+    print('enter optimize')
     [df,Cap_arr,SOH,Cycle_aging_factor,P_max,results, cycle_cal_arr,DoD_arr,aux]=Optimize(param['Capacity'],param['Tech'],param['App_comb'],data_input,param)
-    print('out of optimize1')
+    print('out of optimize')
     param.update({'App_comb':aux_app_comb})
     save_results(name,df,param['Tech'], aux_app_comb,param['Capacity'],Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr,param['PV_nom'],DoD_arr,param['cases'],0)
     aggregate_results(name,df,aux_app_comb,param,Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr,DoD_arr,0)
@@ -408,7 +408,7 @@ def aggregate_results(name,df,aux_app_comb,param,Cap_arr,SOH,Cycle_aging_factor,
     #attention E_batt_load
 
     try:
-        print("OUIIIIIIIIIIIIII")
+        print("aggregating results")
         Capacity_aux=param['Capacity']
         if Capacity_aux%1>0:
 
@@ -434,7 +434,6 @@ def aggregate_results(name,df,aux_app_comb,param,Cap_arr,SOH,Cycle_aging_factor,
         filename=Path('../Output/aggregated_results_ext.csv')
 
         write_csv(filename,agg_results.values)
-        print(agg_results.keys())
         flag=0
     except IOError as e:
         flag=1

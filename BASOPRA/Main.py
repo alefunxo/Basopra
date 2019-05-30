@@ -35,7 +35,7 @@ import time
 from functools import wraps
 from pathlib import Path
 import csv
-
+import pytz
 def fn_timer(function):
 	@wraps(function)
 	def function_timer(*args, **kwargs):
@@ -83,50 +83,57 @@ def load_param():
 	'''
 	test=True
 	aging=True
-	df=pd.read_csv('../Input/Input_data.csv',sep=';|,',decimal='.',engine='python',index_col=[0],usecols=[0])
-	dict_input=df.variable.to_dict()
-	try:
-		filename=Path("../Input/df_US.csv")
-		df=pd.read_csv(filename,sep=';|,',decimal='.',engine='python',index_col=[0])
-	except:
-		print ("Unexpected error")
-	if int(365*24/float(dict_input['Time_resolution']))!=df.shape[0]:
-	    print('The claimed data resolution (in Input_data.csv) and the real data resolution (in df_input) do not correspond')
+	df=pd.read_csv('../Input/Input_data.csv',sep=';|,',decimal='.',engine='python',index_col=[0],usecols=[0,1])
+	dict_input=df.value.to_dict()
+
+	if (float(dict_input['Time_resolution']) not in [0.25,0.5,1])&(dict_input['time_zone'] in pytz.all_timezones):
+		print('This BASOPRA version support only 0.25, 0.5 and 1 hour and time zones in pytz.all_timezones')
+		return
 	else:
-	    if float(dict_input['Time_resolution'])in [0.25,0.5,1]:
-	        freq=str(int(60*float(dict_input['Time_resolution'])))
-	        ind=pd.date_range(start=pd.datetime(int(dict_input['year_data']), 1, 1), periods=df.shape[0], freq=freq+'T',tz='US/Central')
+		dt=float(dict_input['Time_resolution'])
+		if dt==0.25:
+		    filename=Path("../Input/df_15m.csv")
+		    df=pd.read_csv(filename,sep=';|,',engine='python',decimal='.',index_col=[0])
+		elif dt==0.5:
+		    filename=Path("../Input/df_30m.csv")
+		    df=pd.read_csv(filename,sep=';|,',engine='python',decimal='.',index_col=[0])
+		elif dt==1:
+		    filename=Path("../Input/df_1h.csv")
+		    df=pd.read_csv(filename,sep=';|,',engine='python',decimal='.',index_col=[0])
+		if int(365*24/float(dict_input['Time_resolution']))!=df.shape[0]:
+			print('The claimed data resolution (in Input_data.csv) and the real data resolution (in df_input) do not correspond')
+			return
+		else:
+			freq=str(int(60*float(dict_input['Time_resolution'])))
+			ind=pd.date_range(start=pd.datetime(int(dict_input['year_data']), 1, 1), periods=df.shape[0], freq=freq+'T',tz=dict_input['time_zone'])
+			df=df.set_index(ind,drop=True)
+			PV_nominal_power=float(dict_input['PV_nom'])
+			Inverter_power=round(PV_nominal_power/float(dict_input['Inverter_load_ratio']),1)#ILR=1.2
+			Curtailment=float(dict_input['Curtailment'])
+			Inverter_Efficiency=float(dict_input['Inverter_efficiency'])
+			Converter_Efficiency_Batt=float(dict_input['Converter_efficiency'])
+			#define time resolution dt is 1/4 hours i.e. 15 min
 
-	        df.index=ind
-
-	PV_nominal_power=float(dict_input['PV_nom'])
-	Inverter_power=round(PV_nominal_power/float(dict_input['Inverter_load_ratio']),1)#ILR=1.2
-	Curtailment=float(dict_input['Curtailment'])
-	Inverter_Efficiency=float(dict_input['Inverter_efficiency'])
-	Converter_Efficiency_Batt=float(dict_input['Converter_efficiency'])
-	#define time resolution dt is 1/4 hours i.e. 15 min
-	dt=float(dict_input['Time_resolution'])
-	nyears=int(dict_input['number_of_years'])
-	days=int(dict_input['number_of_days'])
-	Capacity_tariff=float(dict_input['Capacity_tariff'])*12/365
-	if (nyears>1) & (days!=365):
-		days=365
-	if days>365:
-		days=365
-	if nyears==0:
-		nyears=1#minimum is 1
-	ndays=days*nyears
-	#define Applications, capacities and technologies to optimize
-	App_comb=np.array([bool(dict_input['Avoidance_PV_curtailment']),True,bool(dict_input['Demand_load_shifting']),bool(dict_input['Demand_peak_shaving'])])
-	Technology=dict_input['Technology']
-	Capacity=float(dict_input['Capacity'])#support any capacity value
-	param={'aging':aging,'Inv_power':Inverter_power,
-	'Curtailment':Curtailment,'Inverter_eff':Inverter_Efficiency,
-	'Converter_Efficiency_Batt':Converter_Efficiency_Batt,
-	'delta_t':dt,'nyears':nyears,'days':days,'ndays':ndays,
-	'App_comb':App_comb,'Tech':Technology,'cases':True,
-	'Capacity':Capacity,'Capacity_tariff':Capacity_tariff,'PV_nom':PV_nominal_power}
-	return param,df
+			nyears=int(dict_input['number_of_years'])
+			days=int(dict_input['number_of_days'])
+			Capacity_tariff=float(dict_input['Capacity_tariff'])*12/365
+			if (nyears>1) & (days!=365):
+				days=365
+			if days>365:
+				days=365
+			if nyears==0:
+				nyears=1#minimum is 1
+			ndays=days*nyears
+			App_comb=np.array([bool(dict_input['Avoidance_PV_curtailment']),True,bool(dict_input['Demand_load_shifting']),bool(dict_input['Demand_peak_shaving'])])
+			Technology=dict_input['Technology']
+			Capacity=float(dict_input['Capacity'])#support any capacity value
+			param={'aging':aging,'Inv_power':Inverter_power,
+			'Curtailment':Curtailment,'Inverter_eff':Inverter_Efficiency,
+			'Converter_Efficiency_Batt':Converter_Efficiency_Batt,
+			'delta_t':dt,'nyears':nyears,'days':days,'ndays':ndays,
+			'App_comb':App_comb,'Tech':Technology,'cases':True,
+			'Capacity':Capacity,'Capacity_tariff':Capacity_tariff,'PV_nom':PV_nominal_power}
+			return param,df
 
 @fn_timer
 def main():

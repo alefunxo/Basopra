@@ -1,16 +1,17 @@
-variable;value;comment
-Inverter_load_ratio;1.2;ILR  is the DC capacity of the solar panels divided by the AC capacity of the inverter, leads to some energy being lost or clipped during the sunniest hours of the year.
-Curtailment;0.5;In some regions with substantial PV penetra-tion,  a  feed-in  limit  is  set  above  which  PV  power  cannot  be  injected  to  the  grid  to  keepgrid stability 
-Inverter_efficiency;0.95;Inverter efficiency (0-1]
-Converter_efficiency;0.98;Converter efficiency (0-1]
-Time_resolution;0.25;Time resolution of the input data (default is 0,25 i.e. 15-minutes)
-number_of_years;1;number of years to be simulated (default is 1) in [1:]
-number_of_days;100;number of days to be simulated (default is 1) in [1:]
-Avoidance_PV_curtailment;1;1 or 0 depending on whether the application is on or off
-Demand_load_shifting;1;1 or 0 depending on whether the application is on or off
-Demand_peak_shaving;1;1 or 0 depending on whether the application is on or off
-Technology;NMC;NMC, NCA, LFP, LTO, VRLA or ALA
-Capacity;7;Integer number different from 0
-Capacity_tariff;10.14;In USD/kW/month
-PV_nom;5;PV system size in kWp
-year_data;2015;year of the data
+variable,value,comment,,,,
+Inverter_load_ratio,1.2,ILR  is the DC capacity of the solar panels divided by the AC capacity of the inverter, leads to some energy being lost or clipped during the sunniest hours of the year.,,,
+Curtailment,0.5,In some regions with substantial PV penetra-tion,  a  feed-in  limit  is  set  above  which  PV  power  cannot  be  injected  to  the  grid  to  keepgrid stability ,,,
+Inverter_efficiency,0.95,Inverter efficiency (0-1],,,,
+Converter_efficiency,0.98,Converter efficiency (0-1],,,,
+Time_resolution,1,Time resolution of the input data (default is 0,25 i.e. 15-minutes),,,
+number_of_years,1,number of years to be simulated (default is 1) in [1:],,,,
+number_of_days,100,number of days to be simulated (default is 1) in [1:],,,,
+Avoidance_PV_curtailment,1,1 or 0 depending on whether the application is on or off,,,,
+Demand_load_shifting,1,1 or 0 depending on whether the application is on or off,,,,
+Demand_peak_shaving,1,1 or 0 depending on whether the application is on or off,,,,
+Technology,NMC,NMC, NCA, LFP, LTO, VRLA or ALA
+Capacity,7,Integer number different from 0,,,,
+Capacity_tariff,10.14,In USD/kW/month,,,,
+PV_nom,5,PV system size in kWp,,,,
+year_data,2015,year of the data,,,,
+time_zone,US/Central,,,,,
