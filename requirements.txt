@@ -1,3 +1,3 @@
-Pyomo <=5.5 
+Pyomo
 
 CPLEX

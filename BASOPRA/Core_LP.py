@@ -176,14 +176,17 @@ def Optimize(Capacity,Tech,App_comb,data_input,
 
 
         instance = optim.Concrete_model(param)
-        if sys.platform=='win32':
-            opt = SolverFactory('cplex')
+        try:
+            if sys.platform=='win32':
+                opt = SolverFactory('cplex')
 
-        else:
-            opt = SolverFactory('cplex',executable='/opt/ibm/ILOG/'
-                            'CPLEX_Studio1271/cplex/bin/x86-64_linux/cplex')
+            else:
+                opt = SolverFactory('cplex',executable='/opt/ibm/ILOG/'
+                                'CPLEX_Studio1271/cplex/bin/x86-64_linux/cplex')
 
-        results = opt.solve(instance)#,tee=True)
+            results = opt.solve(instance)#,tee=True)
+        except:
+            print ("Probably you do not have the correct path for the optimizer")
         #results.write(num=1)
 
         if (results.solver.status == SolverStatus.ok) and (results.solver.termination_condition == TerminationCondition.optimal):

@@ -22,7 +22,7 @@ setup(
     install_requires=['pip>=6.0',
 			'pandas>=0.24.1',
 						'numpy>=1.15.1', 
-						'Pyomo==5.5',
+						'Pyomo==5.6',
 						'setuptools>=40.2.0'],
 
     classifiers=[
