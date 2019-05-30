@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['fullprint',['fullprint',['../classclasses__p_1_1fullprint.html',1,'classes_p']]]
+  ['hardware_5fprices',['Hardware_Prices',['../classpaper__classes_1_1_hardware___prices.html',1,'paper_classes']]]
 ];

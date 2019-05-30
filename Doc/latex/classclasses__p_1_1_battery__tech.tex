@@ -1,0 +1,68 @@
+\hypertarget{classclasses__p_1_1_battery__tech}{}\section{classes\+\_\+p.\+Battery\+\_\+tech Class Reference}
+\label{classclasses__p_1_1_battery__tech}\index{classes\+\_\+p.\+Battery\+\_\+tech@{classes\+\_\+p.\+Battery\+\_\+tech}}
+Inheritance diagram for classes\+\_\+p.\+Battery\+\_\+tech\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classclasses__p_1_1_battery__tech}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classclasses__p_1_1_battery__tech_af413bb6ff8d8af74dcc9ead8a25094ff}\label{classclasses__p_1_1_battery__tech_af413bb6ff8d8af74dcc9ead8a25094ff}} 
+def {\bfseries \+\_\+\+\_\+init\+\_\+\+\_\+} (self, Technology, kwargs)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classclasses__p_1_1_battery__tech_a2424ab61ec6d83cd57ddeb45d5ff5a2c}\label{classclasses__p_1_1_battery__tech_a2424ab61ec6d83cd57ddeb45d5ff5a2c}} 
+{\bfseries Technology}
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+dictionary {\bfseries defaults}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}Battery object with default values for different battery technologies.
+NMC (Tesla), NCA (Trina BESS), LFP (Fortelion), LTO (Leclanche),
+ALA (Fukurawa) and VRLA (Sonnenschein).
+Based on Parra & Patel, 2016 and Datasheets
+Price in USD/kWh in Pena-Bello et al. 2017 it changes according to the techno.
+TODO
+------
+Years of usage as a variable to modify efficiency may be included as well as ageing
+\end{DoxyVerb}
+ 
+
+\subsection{Member Data Documentation}
+\mbox{\Hypertarget{classclasses__p_1_1_battery__tech_a4ed0be6cfed52f6eea827d0b251c302d}\label{classclasses__p_1_1_battery__tech_a4ed0be6cfed52f6eea827d0b251c302d}} 
+\index{classes\+\_\+p\+::\+Battery\+\_\+tech@{classes\+\_\+p\+::\+Battery\+\_\+tech}!defaults@{defaults}}
+\index{defaults@{defaults}!classes\+\_\+p\+::\+Battery\+\_\+tech@{classes\+\_\+p\+::\+Battery\+\_\+tech}}
+\subsubsection{\texorpdfstring{defaults}{defaults}}
+{\footnotesize\ttfamily dictionary classes\+\_\+p.\+Battery\+\_\+tech.\+defaults\hspace{0.3cm}{\ttfamily [static]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}
+=  \{\textcolor{stringliteral}{'Efficiency'}: 0.925,
+                \textcolor{stringliteral}{'P\_max\_dis'}: -1*self.Capacity,
+                \textcolor{stringliteral}{'P\_max\_char'}: 1*self.Capacity,
+                \textcolor{stringliteral}{'SOC\_max'}: 1*self.Capacity,
+                \textcolor{stringliteral}{'SOC\_min'}: 0*self.Capacity,
+                \textcolor{stringliteral}{'Price\_battery'}: 650*self.Capacity,
+                \textcolor{stringliteral}{'Battery\_cal\_life'}: 20,
+                \textcolor{stringliteral}{'Battery\_cycle\_life'}: 8000,
+                \textcolor{stringliteral}{'PCS\_costs'}: 286.65*self.EUR\_USD,
+                \textcolor{stringliteral}{'BOS\_costs'}:2241*self.EUR\_USD,
+                \textcolor{stringliteral}{'OandM\_costs'}: 0,
+                \textcolor{stringliteral}{'Fix\_costs'}: 0,
+                \textcolor{stringliteral}{'EoL'}: 0.7,
+                \textcolor{stringliteral}{'IRENA\_future\_Price'}:145*self.Capacity\}
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+classes\+\_\+p.\+py\end{DoxyCompactItemize}

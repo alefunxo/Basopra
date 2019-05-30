@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['paper_5fclasses_5f2',['paper_classes_2',['../namespacepaper__classes__2.html',1,'']]]
+  ['main_5fpaper',['main_paper',['../namespacemain__paper.html',1,'']]]
 ];
