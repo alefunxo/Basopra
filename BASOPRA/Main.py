@@ -135,6 +135,16 @@ def load_param():
 			'Capacity':Capacity,'Capacity_tariff':Capacity_tariff,'PV_nom':PV_nominal_power}
 			return param,df
 
+def createFolder(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print ('Error: Creating directory. ' +  directory)
+
+
+# Example
+
 @fn_timer
 def main():
 	'''
@@ -146,6 +156,7 @@ def main():
 
 	from Core_LP import single_opt2
 	print('##############')
+	createFolder('../Output/')
 	filename1=Path('../Output/aggregated_results_ext.csv')
 	if 'aggregated_results_ext.csv' not in os.listdir('../Output/'):
 		print('Create a file for aggregated results')
