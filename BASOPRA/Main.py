@@ -9,7 +9,7 @@
 # The battery schedule is optimized for every day (i.e. 24 h optimization framework), we assume perfect day-ahead forecast of the electricity demand load and solar PV generation in order to determine the maximum economic potential regardless of the forecast strategy used. Aging was treated as an exogenous parameter, calculated on daily basis and was not subject of optimization. Data with 15-minute temporal resolution were used for simulations. The model objective function have two components, the energy-based and the power-based component, as the tariff structure depends on the applications considered, a boolean parameter activate the power-based factor of the bill when is necessary.
 # Every optimization was run for one year and then the results were linearly-extrapolated to reach the battery end of life. Therefore, the analysis is done with same prices for all years across battery lifetime. We assume 30\% of capacity depletion as the end of life.
 # The script works in Linux and Windows
-# This script works was tested with pyomo version 5.4.3
+# This script works was tested with pyomo version 5.5
 # INPUTS
 # ------
 # OUTPUTS
