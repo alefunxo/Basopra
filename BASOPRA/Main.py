@@ -124,7 +124,7 @@ def load_param():
 			if nyears==0:
 				nyears=1#minimum is 1
 			ndays=days*nyears
-			App_comb=np.array([bool(dict_input['Avoidance_PV_curtailment']),True,bool(dict_input['Demand_load_shifting']),bool(dict_input['Demand_peak_shaving'])])
+			App_comb=np.array([bool(float(dict_input['Avoidance_PV_curtailment'])),True,bool(float(dict_input['Demand_load_shifting'])),bool(float(dict_input['Demand_peak_shaving']))])
 			Technology=dict_input['Technology']
 			Capacity=float(dict_input['Capacity'])#support any capacity value
 			param={'aging':aging,'Inv_power':Inverter_power,
