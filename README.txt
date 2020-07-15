@@ -6,13 +6,13 @@ Aging is treated as an exogenous parameter, calculated on daily basis and is not
 Citation
 If you make use of this software for your work we would appreciate if you would cite this paper from the journal "Renewable & Sustainable Energy Reviews":
 @article{pena-bello2018,
-  title={ Optimized PV-coupled battery systems for combining applications: impact of battery technology and location},
+  title={Optimized PV-coupled battery systems for combining applications: Impact of battery technology and geography},
   author={Pena-Bello, Alejandro and Barbour, Edward and Gonzalez, Marta C. and Patel, Martin K. and Parra, David},
   journal={Renewable & Sustainable Energy Reviews},
-  volume={ tbd },
-  number={ tbd },
-  pages={ tbd },
-  year={2019}
+  volume={ 112},
+  pages={ 978-990},
+  year={2019},
+  doi={https://doi.org/10.1016/j.rser.2019.06.003}
 }
 
 
