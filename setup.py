@@ -23,7 +23,10 @@ setup(
 			'pandas>=0.24.1',
 						'numpy>=1.15.1', 
 						'pyomo==5.5.1',
-						'setuptools>=40.2.0'],
+						'setuptools>=40.2.0',
+                        'PyUtilib==5.6.3',
+                        'six==1.10.0',
+                        'nose==1.3.7'],
 
     classifiers=[
         'Development Status :: Alpha',
