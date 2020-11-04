@@ -5,7 +5,7 @@ Aging is treated as an exogenous parameter, calculated on daily basis and is not
 
 Citation
 If you make use of this software for your work we would appreciate if you would cite this paper from the journal "Renewable & Sustainable Energy Reviews":
-@article{pena-bello2018,
+@article{pena-bello2019,
   title={Optimized PV-coupled battery systems for combining applications: Impact of battery technology and geography},
   author={Pena-Bello, Alejandro and Barbour, Edward and Gonzalez, Marta C. and Patel, Martin K. and Parra, David},
   journal={Renewable & Sustainable Energy Reviews},
@@ -32,7 +32,7 @@ Once the setup has been succesfully run, you can run the Main script, for this, 
 cd BASOPRA
 python3 Main.py
 
-Please have in mind that you will need CPLEX (or gurobi, glpk...) to run the optimization. If you have problems with CPLEX or other optimization software but you are sure you have it, go to Core_LP.py and be sure that the executable path is the correct one for your system, it is in the line opt = SolverFactory('PATH_TO_YOUR_OPTIMIZATION_SOFTWARE').
+Please have in mind that you will need CPLEX (or gurobi, glpk...) to run the optimization. If you have problems with CPLEX or other optimization software but you are sure you have it, go to Core_LP.py and be sure that the executable path is the correct one for your system, it is in the line opt = SolverFactory('PATH_TO_YOUR_OPTIMIZATION_SOFTWARE') (i.e., lines 181 and 184 of Core_LP.py).
 
 ---------------------------HOW TO USE---------------------
 If you have clone BASOPRA from github.com you will see three folders inside Basopra (BASOPRA, Input and Doc). BASOPRA contains the code, Doc the documentation. Finally, Input contains 5 files, df_1h.csv (example of dataframe with one-hour resolution), df_30m.csv (example of dataframe with 30-minute resolution), df_15m.csv (example of dataframe with 15-minute resolution), df_US_Batt.csv (US data used for the optimization in Pena-Bello et al. (2019) and Input_data.csv. Input_data.csv contains the parameters by default of the optimization, such as inverter load ratio, inverter and converter efficiency, number of days to be simulated, etc. Please modify this file to customize your optimization. 
