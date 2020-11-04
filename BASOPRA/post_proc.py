@@ -79,6 +79,7 @@ def get_main_results(dict_res,param):
     """
     print('Main results')
     df=dict_res['df']
+    dt=param['delta_t']
     App_comb_scenarios=np.array([i for i in itertools.product([False, True],repeat=3)])
     App_comb_scenarios=np.insert(App_comb_scenarios,slice(1,2),True,axis=1)
     App_comb=pd.DataFrame(App_comb_scenarios)
