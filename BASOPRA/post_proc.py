@@ -39,12 +39,12 @@ def get_base_prices(country,App_comb,PV_nom,df_base,df_batt,param):
         df_base.curt[df_base.surplus>PV_nom*curtailment*dt]=df_base.surplus[df_base.surplus>PV_nom*curtailment*dt]-PV_nom*curtailment*dt
         df_base.curt[df_base.curt<0]=0
     if App_comb[3]:
-        P_max_month_PV=df_base.groupby([df_base.index.month]).rem_load.max()*4
+        P_max_month_PV=df_base.groupby([df_base.index.month]).rem_load.max()/dt
         bill_power_PV=P_max_month_PV*Capacity_tariff
-        P_max_month=df_base.groupby([df_base.index.month]).E_demand.max()*4
+        P_max_month=df_base.groupby([df_base.index.month]).E_demand.max()/dt
         bill_power=P_max_month_PV*Capacity_tariff
 
-        P_max_month_batt=df_batt.groupby([df_batt.index.month]).E_cons.max()*4
+        P_max_month_batt=df_batt.groupby([df_batt.index.month]).E_cons.max()/dt
         bill_power_batt=P_max_month_batt*Capacity_tariff
 
 
@@ -114,7 +114,7 @@ def get_main_results(dict_res,param):
 
     agg_results['last_SOH']=dict_res['SOH'][-1]
     agg_results['P_max_year_batt']=dict_res['P_max'].max()
-    agg_results['P_max_year_nbatt']=df['E_demand'].max()*4
+    agg_results['P_max_year_nbatt']=df['E_demand'].max()/dt
 
     agg_results['Capacity']=dict_res['Capacity']
     agg_results['Tech']=dict_res['Tech']
