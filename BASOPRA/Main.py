@@ -175,6 +175,7 @@ def main():
 	param,data_input=load_param()
 	name=data_input.columns[0]
 	data_input.columns=['E_demand','E_PV','Price_flat','Price_DT','Export_price','Price_flat_mod','Price_DT_mod']
+    
 	print(param)
 	print(data_input.head())
 	try:

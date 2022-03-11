@@ -162,7 +162,7 @@ def Optimize(Capacity,Tech,App_comb,data_input,
         E_demand_dict=dict(enumerate(data_input_.E_demand))
         E_PV_dict=dict(enumerate(data_input_.E_PV))
         Set_declare=np.arange(-1,data_input_.shape[0])
-
+        #App_comb=[1,1,1,1]
         param.update({'SOC_max':aux_SOC_max,
     		'Batt':Batt,
     		'Export_price':Export_price_dict,
@@ -173,8 +173,8 @@ def Optimize(Capacity,Tech,App_comb,data_input,
             #Max_inj is in kW
 
         param['Max_inj']=param['Curtailment']*param['PV_nom']
-
-
+        
+        print(App_comb)
         instance = optim.Concrete_model(param)
         try:
             if sys.platform=='win32':
@@ -382,9 +382,9 @@ def single_opt2(param, data_input, name):
     print(param['cases'])
     param.update({'cases':param['cases']})
     print('enter optimize')
-    [df,Cap_arr,SOH,Cycle_aging_factor,P_max,results, cycle_cal_arr,DoD_arr,aux]=Optimize(param['Capacity'],param['Tech'],param['App_comb'],data_input,param)
+    [df,Cap_arr,SOH,Cycle_aging_factor,P_max,results, cycle_cal_arr,DoD_arr,aux]=Optimize(param['Capacity'],param['Tech'],param['App_comb']*1,data_input,param)
     print('out of optimize')
-    param.update({'App_comb':aux_app_comb})
+    param.update({'App_comb':aux_app_comb})    
     save_results(name,df,param['Tech'], aux_app_comb,param['Capacity'],Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr,param['PV_nom'],DoD_arr,param['cases'],0)
     aggregate_results(name,df,aux_app_comb,param,Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr,DoD_arr,0)
     return  [df,Cap_arr,SOH,Cycle_aging_factor,P_max,results,cycle_cal_arr]
