@@ -23,9 +23,10 @@ git clone https://github.com/alefunxo/Basopra.git
 then go to the repertory BASOPRA and run the setup:
 
 cd Basopra
-python3 setup.py install 
+conda env create -f environment_droplet.yml
+conda activate basopra_1
 
-pyomo 5.5.1 proved to work fine with python 3.6 and 3.7, please use this version.
+pyomo 5.5.1 proved to work fine with python 3.6, 3.7 and 3.9, please use this version.
 
 Once the setup has been succesfully run, you can run the Main script, for this, change the repertory to the subdirectory BASOPRA and run python3 Main.py:
 
