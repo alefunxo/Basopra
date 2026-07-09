@@ -20,31 +20,29 @@
 # Simplify by merging select_data and load_data and probably load_param.
 # Requirements
 # ------------
-#  Pandas, numpy, sys, glob, os, csv, pickle, functools, argparse, itertools, time, math, pyomo and multiprocessing
+#  Pandas, numpy, os, csv, functools, time, pytz and pyomo
 
 
 import os
 import pandas as pd
-import argparse
 import numpy as np
-import itertools
-import sys
-import glob
-import multiprocessing as mp
 import time
+import configparser
 from functools import wraps
 from pathlib import Path
 import csv
 import pytz
+import logging
+
+logger = logging.getLogger(__name__)
+
 def fn_timer(function):
 	@wraps(function)
 	def function_timer(*args, **kwargs):
 		t0 = time.time()
 		result = function(*args, **kwargs)
 		t1 = time.time()
-		print ("Total time running %s: %s seconds" %
-			   (function.__name__, str(t1-t0))
-			   )
+		logger.info("Total time running %s: %s seconds", function.__name__, str(t1-t0))
 		return result
 	return function_timer
 
@@ -83,11 +81,13 @@ def load_param():
 	'''
 	test=True
 	aging=True
-	df=pd.read_csv('../Input/Input_data.csv',sep=';|,',decimal='.',engine='python',index_col=[0],usecols=[0,1])
-	dict_input=df.value.to_dict()
+	config=configparser.ConfigParser()
+	config.optionxform=str#preserve key case
+	config.read('../Input/Input_data.ini')
+	dict_input=dict(config['BASOPRA'])
 
-	if (float(dict_input['Time_resolution']) not in [0.25,0.5,1])&(dict_input['time_zone'] in pytz.all_timezones):
-		print('This BASOPRA version support only 0.25, 0.5 and 1 hour and time zones in pytz.all_timezones')
+	if (float(dict_input['Time_resolution']) not in [0.25,0.5,1]) or (dict_input['time_zone'] not in pytz.all_timezones):
+		logger.error('This BASOPRA version support only 0.25, 0.5 and 1 hour and time zones in pytz.all_timezones')
 		return
 	else:
 		dt=float(dict_input['Time_resolution'])
@@ -101,11 +101,11 @@ def load_param():
 		    filename=Path("../Input/df_1h.csv")
 		    df=pd.read_csv(filename,sep=';|,',engine='python',decimal='.',index_col=[0])
 		if int(365*24/float(dict_input['Time_resolution']))!=df.shape[0]:
-			print('The claimed data resolution (in Input_data.csv) and the real data resolution (in df_input) do not correspond')
+			logger.error('The claimed data resolution (in Input_data.ini) and the real data resolution (in df_input) do not correspond')
 			return
 		else:
 			freq=str(int(60*float(dict_input['Time_resolution'])))
-			ind=pd.date_range(start=pd.Timestamp(int(dict_input['year_data']), 1, 1), periods=df.shape[0], freq=freq+'T',tz=dict_input['time_zone'])
+			ind=pd.date_range(start=pd.Timestamp(int(dict_input['year_data']), 1, 1), periods=df.shape[0], freq=freq+'min',tz=dict_input['time_zone'])
 			df=df.set_index(ind,drop=True)
 			PV_nominal_power=float(dict_input['PV_nom'])
 			Inverter_power=round(PV_nominal_power/float(dict_input['Inverter_load_ratio']),1)#ILR=1.2
@@ -116,6 +116,7 @@ def load_param():
 
 			nyears=int(dict_input['number_of_years'])
 			days=int(dict_input['number_of_days'])
+			window_days=int(dict_input['Optimization_window_days'])
 			Capacity_tariff=float(dict_input['Capacity_tariff'])*12/365
 			if (nyears>1) & (days!=365):
 				days=365
@@ -131,6 +132,7 @@ def load_param():
 			'Curtailment':Curtailment,'Inverter_eff':Inverter_Efficiency,
 			'Converter_Efficiency_Batt':Converter_Efficiency_Batt,
 			'delta_t':dt,'nyears':nyears,'days':days,'ndays':ndays,
+			'window_days':window_days,
 			'App_comb':App_comb,'Tech':Technology,'cases':True,
 			'Capacity':Capacity,'Capacity_tariff':Capacity_tariff,'PV_nom':PV_nominal_power}
 			return param,df
@@ -140,7 +142,7 @@ def createFolder(directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
     except OSError:
-        print ('Error: Creating directory. ' +  directory)
+        logger.exception('Error: Creating directory. %s', directory)
 
 
 # Example
@@ -150,16 +152,16 @@ def main():
 	'''
 	Main function of the main script.
 	'''
-	print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
-	print('Welcome to the  BAttery Schedule OPtimizer for Residential Application (BASOPRA).')
-	print('This model allows the user to optimize the battery schedule of a customer, based on the PV generation, electricity demand and electricity tariffs. It is designed for residential applications (i.e., PV self-consumption, avoidance of PV curtailment, demand load shifting and demand peak shaving), but the input data can be of residential customers, C&I or aggregated for communities.')
+	logger.info('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+	logger.info('Welcome to the  BAttery Schedule OPtimizer for Residential Application (BASOPRA).')
+	logger.info('This model allows the user to optimize the battery schedule of a customer, based on the PV generation, electricity demand and electricity tariffs. It is designed for residential applications (i.e., PV self-consumption, avoidance of PV curtailment, demand load shifting and demand peak shaving), but the input data can be of residential customers, C&I or aggregated for communities.')
 
 	from Core_LP import single_opt2
-	print('##############')
+	logger.debug('Loaded Core_LP.single_opt2')
 	createFolder('../Output/')
 	filename1=Path('../Output/aggregated_results_ext.csv')
 	if 'aggregated_results_ext.csv' not in os.listdir('../Output/'):
-		print('Create a file for aggregated results')
+		logger.info('Create a file for aggregated results')
 		with open(filename1, 'w', newline='') as f:
 			columns=['E_PV_batt', 'E_PV_curt', 'E_PV_grid', 'E_PV_load', 'E_char', 'E_cons',
        'E_dis', 'E_grid_batt', 'E_grid_load', 'E_loss_Batt', 'E_loss_conv',
@@ -175,26 +177,24 @@ def main():
 	param,data_input=load_param()
 	name=data_input.columns[0]
 	data_input.columns=['E_demand','E_PV','Price_flat','Price_DT','Export_price','Price_flat_mod','Price_DT_mod']
-    
-	print(param)
-	print(data_input.head())
+
+	logger.debug('%s', param)
+	logger.debug('%s', data_input.head())
 	try:
 		if param['nyears']>1:
 			data_input=pd.DataFrame(np.tile(np.array(data_input).T,param['nyears']).T,columns=data_input.columns)
-		print('#############pool################')
+		logger.debug('Entering single_opt2')
 		[df_out,Cap_arr,SOH,Cycle_aging_factor,P_max,results,         cycle_cal_arr]=single_opt2(param,data_input,name)
-		print('out of optimization')
-		#print(df_out.sum())
+		logger.debug('single_opt2 finished')
 	except IOError as e:
-		print ("I/O error({0}): {1}".format(e.errno, e.strerror))
+		logger.warning("I/O error(%s): %s", e.errno, e.strerror)
 
 	except ValueError:
-		print ("Could not convert data to an integer.")
+		logger.warning("Could not convert data to an integer.")
 
 	except Exception:
-		import traceback
-		print ("Unexpected error:")
-		traceback.print_exc()
-	print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+		logger.exception("Unexpected error:")
+	logger.info('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
 if __name__== '__main__':
+	logging.basicConfig(level=logging.INFO, format='%(message)s')
 	main()
