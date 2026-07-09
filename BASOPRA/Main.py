@@ -46,6 +46,23 @@ def fn_timer(function):
 		return result
 	return function_timer
 
+def build_time_index(tz_name, year, periods, freq_minutes):
+	'''
+	Build the DatetimeIndex used to label the input data.
+
+	Uses the UTC offset in effect on Jan 1 of `year` for `tz_name`, fixed for
+	the whole index, instead of letting the zone observe DST. Optimize()
+	(Core_LP.py) always slices the year into fixed-length day windows of
+	steps_day rows; a DST transition inside the simulated window would
+	otherwise give that calendar day 92 or 100 rows instead of steps_day,
+	desynchronizing post_proc.py's month/day billing grouping from the LP's
+	own day boundaries.
+	'''
+	start=pd.Timestamp(year, 1, 1)
+	fixed_offset=pytz.timezone(tz_name).localize(start).utcoffset()
+	return pd.date_range(start=start, periods=periods, freq=f'{freq_minutes}min',
+	                      tz=pytz.FixedOffset(int(fixed_offset.total_seconds()//60)))
+
 @fn_timer
 def load_param():
 	'''
@@ -104,8 +121,7 @@ def load_param():
 			logger.error('The claimed data resolution (in Input_data.ini) and the real data resolution (in df_input) do not correspond')
 			return
 		else:
-			freq=str(int(60*float(dict_input['Time_resolution'])))
-			ind=pd.date_range(start=pd.Timestamp(int(dict_input['year_data']), 1, 1), periods=df.shape[0], freq=freq+'min',tz=dict_input['time_zone'])
+			ind=build_time_index(dict_input['time_zone'], int(dict_input['year_data']), df.shape[0], int(60*float(dict_input['Time_resolution'])))
 			df=df.set_index(ind,drop=True)
 			PV_nominal_power=float(dict_input['PV_nom'])
 			Inverter_power=round(PV_nominal_power/float(dict_input['Inverter_load_ratio']),1)#ILR=1.2
@@ -175,8 +191,17 @@ def main():
 			writer = csv.writer(f, delimiter=';')
 			writer.writerow(columns)
 	param,data_input=load_param()
+	# The first column holds the customer id/name and its header is used
+	# as the customer name; the remaining columns are matched by their
+	# actual header names rather than assumed to be in a fixed order.
 	name=data_input.columns[0]
-	data_input.columns=['E_demand','E_PV','Price_flat','Price_DT','Export_price','Price_flat_mod','Price_DT_mod']
+	expected_cols=['E_PV','Price_flat','Price_DT','Export_price','Price_flat_mod','Price_DT_mod']
+	missing_cols=[c for c in expected_cols if c not in data_input.columns]
+	if missing_cols:
+		logger.error('Input data file is missing expected column(s): %s. Found columns: %s', missing_cols, list(data_input.columns))
+		return
+	data_input=data_input[[name]+expected_cols]
+	data_input.columns=['E_demand']+expected_cols
 
 	logger.debug('%s', param)
 	logger.debug('%s', data_input.head())
