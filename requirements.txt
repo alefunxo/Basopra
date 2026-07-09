@@ -1,3 +1,9 @@
-Pyomo
+pandas>=2.2
+numpy>=2.0
+pyomo>=6.8
+matplotlib>=3.9
+pytz>=2024.1
 
-CPLEX
+# Solver (pick one - not installable via this file):
+# - Windows: Gurobi (pip install gurobipy, requires a license) - used via SolverFactory('gurobi')
+# - Linux: CPLEX (install via IBM's own installer) - used via SolverFactory('cplex', executable=...)
