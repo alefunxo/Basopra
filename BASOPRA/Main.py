@@ -105,7 +105,7 @@ def load_param():
 			return
 		else:
 			freq=str(int(60*float(dict_input['Time_resolution'])))
-			ind=pd.date_range(start=pd.datetime(int(dict_input['year_data']), 1, 1), periods=df.shape[0], freq=freq+'T',tz=dict_input['time_zone'])
+			ind=pd.date_range(start=pd.Timestamp(int(dict_input['year_data']), 1, 1), periods=df.shape[0], freq=freq+'T',tz=dict_input['time_zone'])
 			df=df.set_index(ind,drop=True)
 			PV_nominal_power=float(dict_input['PV_nom'])
 			Inverter_power=round(PV_nominal_power/float(dict_input['Inverter_load_ratio']),1)#ILR=1.2
@@ -180,7 +180,7 @@ def main():
 	print(data_input.head())
 	try:
 		if param['nyears']>1:
-			data_input=pd.DataFrame(pd.np.tile(pd.np.array(data_input).T,param['nyears']).T,columns=data_input.columns)
+			data_input=pd.DataFrame(np.tile(np.array(data_input).T,param['nyears']).T,columns=data_input.columns)
 		print('#############pool################')
 		[df_out,Cap_arr,SOH,Cycle_aging_factor,P_max,results,         cycle_cal_arr]=single_opt2(param,data_input,name)
 		print('out of optimization')
@@ -191,9 +191,10 @@ def main():
 	except ValueError:
 		print ("Could not convert data to an integer.")
 
-	except:
-		print ("Unexpected error:", sys.exc_info()[0])
-		print ("Unexpected error2:", sys.stderr)
+	except Exception:
+		import traceback
+		print ("Unexpected error:")
+		traceback.print_exc()
 	print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
 if __name__== '__main__':
 	main()

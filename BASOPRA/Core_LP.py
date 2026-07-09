@@ -37,6 +37,7 @@ import os
 import tempfile
 import post_proc as pp
 import threading
+import traceback
 from pathlib import Path
 
 def fn_timer(function):
@@ -112,10 +113,10 @@ def Optimize(Capacity,Tech,App_comb,data_input,
     print(App_comb)
     print(Tech)
     print(Capacity)
-    days=1
+    days=7
     dt=param['delta_t']
+    steps_day=int(24/dt)
     end_d=int(param['ndays']*24/dt)
-    window=int(24*days/dt)
     print(end_d)
 
     print('%%%%%%%%% Optimizing %%%%%%%%%%%%%%%')
@@ -134,10 +135,15 @@ def Optimize(Capacity,Tech,App_comb,data_input,
     aux_Cap=Batt.Capacity
     SOC_max_=Batt.SOC_max
     SOH_aux=1
+    Cycle_aging_factor=0
+    eol_reached=False
+    last_day_processed=-1
 
-    for i in range(int(param['ndays']/days)):
+    n_windows=math.ceil(param['ndays']/days)
+    for i in range(n_windows):
         print(i, end='')
-        toy=0
+        d0=i*days
+        d1=min(d0+days,param['ndays'])
         if i==0:
             aux_Cap_aged=Batt.Capacity
             aux_SOC_max=Batt.SOC_max
@@ -146,7 +152,7 @@ def Optimize(Capacity,Tech,App_comb,data_input,
             aux_Cap_aged=aux_Cap
             aux_SOC_max=SOC_max_
             SOH=SOH_aux
-        data_input_=data_input[data_input.index.dayofyear==data_input.index.dayofyear[0]+i]
+        data_input_=data_input.iloc[d0*steps_day:d1*steps_day]
         if App_comb[2]==True:
             if App_comb[3]==True:
                 retail_price_dict=dict(enumerate(data_input_.Price_DT_mod))
@@ -176,17 +182,20 @@ def Optimize(Capacity,Tech,App_comb,data_input,
         
         print(App_comb)
         instance = optim.Concrete_model(param)
+        results=None
         try:
             if sys.platform=='win32':
-                opt = SolverFactory('cplex')
+                opt = SolverFactory('gurobi')
 
             else:
                 opt = SolverFactory('cplex',executable='/opt/ibm/ILOG/'
                                 'CPLEX_Studio1271/cplex/bin/x86-64_linux/cplex')
 
             results = opt.solve(instance)#,tee=True)
-        except:
-            print ("Probably you do not have the correct path for the optimizer")
+        except Exception:
+            print ("Solver call failed, check solver installation/path:")
+            traceback.print_exc()
+            return (None,None,None,None,None,None,None,None,None)
         #results.write(num=1)
 
         if (results.solver.status == SolverStatus.ok) and (results.solver.termination_condition == TerminationCondition.optimal):
@@ -194,41 +203,44 @@ def Optimize(Capacity,Tech,App_comb,data_input,
         # Do something when the solution is optimal and feasible
             [df_1,P_max]=Get_output(instance)
 
-            if param['aging']:
-                [SOC_max_,aux_Cap,SOH_aux,Cycle_aging_factor,cycle_cal,DoD]=aging_day(
-                df_1.E_char,SOH,Batt.SOC_min,Batt,aux_Cap_aged)
-                DoD_arr[i]=DoD
-                cycle_cal_arr[i]=cycle_cal
-                P_max_arr[i]=P_max
-                aux_Cap_arr[i]=aux_Cap
-                SOC_max_arr[i]=SOC_max_
-                SOH_arr[i]=SOH_aux
-            else:
-                DoD_arr[i]=df_1.E_dis.sum()/Batt.Capacity
-                cycle_cal_arr[i]=0
-                P_max_arr[i]=P_max
-                aux_Cap_arr[i]=aux_Cap
-                SOC_max_arr[i]=SOC_max_
-                SOH_arr[i]=SOH_aux
-                Cycle_aging_factor=0
+            n_days_window=d1-d0
+            for day_offset in range(n_days_window):
+                d=d0+day_offset
+                day_rows=df_1.iloc[day_offset*steps_day:(day_offset+1)*steps_day]
+                if param['aging']:
+                    [SOC_max_,aux_Cap,SOH_aux,Cycle_aging_factor,cycle_cal,DoD]=aging_day(
+                    day_rows.E_char,SOH,Batt.SOC_min,Batt,aux_Cap_aged)
+                    DoD_arr[d]=DoD
+                    cycle_cal_arr[d]=cycle_cal
+                    P_max_arr[d]=P_max
+                    aux_Cap_arr[d]=aux_Cap
+                    SOC_max_arr[d]=SOC_max_
+                    SOH_arr[d]=SOH_aux
+                    aux_Cap_aged=aux_Cap
+                    aux_SOC_max=SOC_max_
+                    SOH=SOH_aux
+                else:
+                    DoD_arr[d]=day_rows.E_dis.sum()/Batt.Capacity
+                    cycle_cal_arr[d]=0
+                    P_max_arr[d]=P_max
+                    aux_Cap_arr[d]=aux_Cap
+                    SOC_max_arr[d]=SOC_max_
+                    SOH_arr[d]=SOH_aux
+                last_day_processed=d
+                if SOH_arr[d]<=0:
+                    eol_reached=True
+                    break
+                if d/365>Batt.Battery_cal_life:
+                    eol_reached=True
+                    break
+
             results_arr.append(instance.total_cost())
             if i==0:#initialize
                 df=pd.DataFrame(df_1)
-            elif i==param['ndays']-1:#if we go until the end of the days
-                df=df.append(df_1,ignore_index=True)
-                if SOH<=0:
-                    break
-                if param['ndays']/365>Batt.Battery_cal_life:
-                    break
-            else:#if SOH or ndays are greater than the limit
-                df=df.append(df_1,ignore_index=True)
-                if SOH<=0:
-                    df=df.append(df_1,ignore_index=True)
-                    end_d=df.shape[0]
-                    break
-                if i/365>Batt.Battery_cal_life:
-                    df=df.append(df_1,ignore_index=True)
-                    break
+            else:
+                df=pd.concat([df,df_1],ignore_index=True)
+            if eol_reached or d1>=param['ndays']:
+                break
         elif (results.solver.termination_condition == TerminationCondition.infeasible):
 
             # Do something when model is infeasible
@@ -238,6 +250,10 @@ def Optimize(Capacity,Tech,App_comb,data_input,
             # Something else is wrong
             print ('Solver Status: ',  results.solver.status)
             return (None,None,None,None,None,None,None,None,results)
+    if eol_reached:
+        #trim the trailing rows of the last (possibly partial) window that
+        #came after the day the battery actually reached EoL
+        df=df.iloc[:(last_day_processed+1)*steps_day].reset_index(drop=True)
     end_d=df.shape[0]
     df=pd.concat([df,data_input.loc[data_input.index[:end_d],['E_demand','E_PV','Export_price']].reset_index()],axis=1)
     if App_comb[2]==True:
@@ -448,11 +464,10 @@ def aggregate_results(name,df,aux_app_comb,param,Cap_arr,SOH,Cycle_aging_factor,
         print('Had some issues with the aggregated results')
         print ("Could not convert data to an integer.")
 
-    except:
+    except Exception:
         flag=1
         print('Had some issues with the aggregated results')
-        print ("Unexpected error:", sys.exc_info()[0])
-        print ("Unexpected error2:", sys.stderr)
+        traceback.print_exc()
 
     finally:
 

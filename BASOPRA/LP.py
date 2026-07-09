@@ -327,7 +327,7 @@ def Conv_losses_rule(m,i):
     -------
     Converter losses definition. 1-Converter_efficiency times the electricity that pass through the converter.
     '''
-    return(m.E_loss_conv[i],((m.E_PV_load[i]+m.E_PV_grid[i]+m.E_PV_batt[i]+m.E_loss_inv_PV[i])*(1-m.Converter_eff)))
+    return(m.E_loss_conv[i],((m.E_PV_load[i]+m.E_PV_grid[i]+m.E_PV_batt[i]+m.E_loss_inv_PV[i])*(1-m.Converter_eff)/m.Converter_eff))
 
 def Inv_losses_PV_rule(m,i):
     '''
